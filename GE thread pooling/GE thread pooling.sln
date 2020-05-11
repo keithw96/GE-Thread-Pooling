@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GE thread pooling", "GE thread pooling\GE thread pooling.vcxproj", "{721BC9F8-4B00-49EE-BB39-086A568695B7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Debug|x64.ActiveCfg = Debug|x64
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Debug|x64.Build.0 = Debug|x64
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Debug|x86.ActiveCfg = Debug|Win32
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Debug|x86.Build.0 = Debug|Win32
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Release|x64.ActiveCfg = Release|x64
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Release|x64.Build.0 = Release|x64
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Release|x86.ActiveCfg = Release|Win32
+		{721BC9F8-4B00-49EE-BB39-086A568695B7}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6C4A67E8-9E43-44D6-8562-F122F8F330FA}
+	EndGlobalSection
+EndGlobal
