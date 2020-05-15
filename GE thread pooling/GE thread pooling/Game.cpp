@@ -17,7 +17,8 @@ void Game::init()
 	SDL_SetRenderDrawColor(m_renderer, 255, 0, 0, 255);
 
 	m_player = new Player(m_renderer);
-
+	m_enemyMovementTimer = 20;
+	m_keyInputTimer = 5;
 	std::string line;
 	std::ifstream myFile("Assets/Maps/Map1.txt");
 	std::vector<int> mapArray;
@@ -37,76 +38,98 @@ void Game::init()
 		{
 			if (mapArray[arrayIndex] == 2)
 			{
-				m_maptiles[i][j] = new MapTile(m_renderer, "Assets/Textures/wall.bmp", Vector2(i * 32, j * 32), true);
-				m_tiles.push_back(m_maptiles[i][j]);
+				m_maptiles[i][j].init(m_renderer, "Assets/Textures/wall.bmp", Vector2(i * 32, j * 32), true);
+				m_maptiles[i][j].setCost(999);
+				m_tiles.push_back(&m_maptiles[i][j]);
+				
 			}
 			if (mapArray[arrayIndex] == 4)
 			{
-				m_maptiles[i][j] = new MapTile(m_renderer, "Assets/Textures/emptyTile.bmp", Vector2(i * 32, j * 32), false);
-				m_tiles.push_back(m_maptiles[i][j]);
+				m_maptiles[i][j].init(m_renderer, "Assets/Textures/emptyTile.bmp", Vector2(i * 32, j * 32), false);
+				m_tiles.push_back(&m_maptiles[i][j]);
 			}
 			if (mapArray[arrayIndex] == 3)
 			{
-				m_maptiles[i][j] = new MapTile(m_renderer, "Assets/Textures/emptyTile.bmp", Vector2(i * 32, j * 32), false);
-				m_tiles.push_back(m_maptiles[i][j]);
+				m_maptiles[i][j].init(m_renderer, "Assets/Textures/emptyTile.bmp", Vector2(i * 32, j * 32), false);
+				m_tiles.push_back(&m_maptiles[i][j]);
 
 				m_player->setPos(Vector2(i * 32, j * 32));
+			}
+			if (mapArray[arrayIndex] == 1)
+			{
+				m_maptiles[i][j].init(m_renderer, "Assets/Textures/emptyTile.bmp", Vector2(i * 32, j * 32), false);
+				m_tiles.push_back(&m_maptiles[i][j]);
+
+				Enemy* enemy = new Enemy(m_renderer, Vector2(i * 32, j * 32));
+				m_enemies.push_back(enemy);
 			}
 			arrayIndex++;
 		}
 	}
-	
+	setAdjacents();
+
 }
 
 void Game::handleEvents()
 {
 	SDL_PollEvent(&m_event);
-	switch (m_event.type)
+
+	if (m_keyInputTimer > 5)
 	{
-	case SDL_KEYDOWN:
-		switch (m_event.key.keysym.sym)
+		switch (m_event.type)
 		{
-		case SDLK_ESCAPE:
-			m_running = false;
-			break;
-		case SDLK_UP:
-			if (!m_maptiles[(int)m_player->getPos().x / 32][((int)m_player->getPos().y / 32) - 1]->getIsObstacle())
+		case SDL_KEYDOWN:
+			switch (m_event.key.keysym.sym)
 			{
-				m_player->moveUp();
+			case SDLK_ESCAPE:
+				m_running = false;
+				break;
+			case SDLK_UP:
+				if (!m_maptiles[(int)m_player->getPos().x / 32][((int)m_player->getPos().y / 32) - 1].getIsObstacle())
+				{
+					m_player->moveUp();
+				}
+				break;
+			case SDLK_DOWN:
+				if (!m_maptiles[(int)m_player->getPos().x / 32][((int)m_player->getPos().y / 32) + 1].getIsObstacle())
+				{
+					m_player->moveDown();
+				}
+				break;
+			case SDLK_LEFT:
+				if (!m_maptiles[((int)m_player->getPos().x / 32) - 1][(int)m_player->getPos().y / 32].getIsObstacle())
+				{
+					m_player->moveLeft();
+				}
+				break;
+			case SDLK_RIGHT:
+				if (!m_maptiles[((int)m_player->getPos().x / 32) + 1][(int)m_player->getPos().y / 32].getIsObstacle())
+				{
+					m_player->moveRight();
+				}
+				break;
+			default:
+				break;
 			}
-			break;
-		case SDLK_DOWN:
-			if (!m_maptiles[(int)m_player->getPos().x / 32][((int)m_player->getPos().y / 32) + 1]->getIsObstacle())
-			{
-				m_player->moveDown();
-			}
-			break;
-		case SDLK_LEFT:
-			if (!m_maptiles[((int)m_player->getPos().x / 32) - 1][(int)m_player->getPos().y / 32]->getIsObstacle())
-			{
-				m_player->moveLeft();
-			}
-			break;
-		case SDLK_RIGHT:
-			if (!m_maptiles[((int)m_player->getPos().x / 32) + 1][(int)m_player->getPos().y / 32]->getIsObstacle())
-			{
-				m_player->moveRight();
-			}
+
+
 			break;
 		default:
 			break;
 		}
-		SDL_Delay(100);
-
-		break;
-	default:
-		break;
+		m_keyInputTimer = 0;
 	}
+	m_keyInputTimer++;
 }
 
 void Game::update()
 {
 	m_player->update();
+	
+	setFlowField();
+
+	enemyMovement();
+
 }
 
 void Game::render()
@@ -116,6 +139,10 @@ void Game::render()
 	for (auto t : m_tiles)
 	{
 		t->render(m_renderer);
+	}
+	for (auto e : m_enemies)
+	{
+		e->render(m_renderer);
 	}
 
 	m_player->render(m_renderer);
@@ -128,4 +155,114 @@ void Game::clean()
 	SDL_DestroyWindow(m_window);
 	SDL_DestroyRenderer(m_renderer);
 	SDL_Quit();
+}
+
+void Game::setAdjacents()
+{
+	for (int i = 0; i < 30; i++)
+	{
+		for (int j = 0; j < 30; j++)
+		{
+			if (i > 0)
+			{
+				m_maptiles[i][j].addAdjacent(m_maptiles[i - 1][j]);
+			}
+
+			if (i + 1 < 30)
+			{
+				m_maptiles[i][j].addAdjacent(m_maptiles[i + 1][j]);
+			}
+
+			if (j > 0)
+			{
+				m_maptiles[i][j].addAdjacent(m_maptiles[i][j - 1]);
+			}
+
+			if (j < 30)
+			{
+				m_maptiles[i][j].addAdjacent(m_maptiles[i][j + 1]);
+			}
+		}
+	}
+}
+
+void Game::setFlowField()
+{
+	MapTile* goal = &m_maptiles[(int)m_player->getPos().x / 32][(int)m_player->getPos().y / 32];
+	
+	std::list<MapTile*> queue;
+
+	for (int i = 0; i < 30; i++)
+	{
+		for (int j = 0; j < 30; j++)
+		{
+			m_maptiles[i][j].setStart(false);
+			m_maptiles[i][j].setGoal(false);
+			m_maptiles[i][j].setPath(false);
+			m_maptiles[i][j].setVisited(false);
+			m_maptiles[i][j].setCost(0);
+		}
+	}
+
+	goal->setGoal(true);
+	goal->setVisited(true);
+	queue.push_back(goal);
+
+	while (!queue.empty())
+	{
+		int originCost = queue.front()->getCost();
+
+		for (auto& a : queue.front()->getAdjacents())
+		{
+			if (!a->getVisited())
+			{
+				a->setVisited(true);
+				if (!a->getIsObstacle())
+				{
+					a->setCost(originCost + 1);
+					a->setPrevious(*queue.front());
+					queue.push_back(a);
+				}
+			}
+		}
+		queue.pop_front();
+	}
+
+	for (int i = 0; i < 30; i++)
+	{
+		for (int j = 0; j < 30; j++)
+		{
+			if (m_maptiles[i][j].getPrevious() && m_maptiles[i][j].getIsObstacle() == false)
+			{
+				Vector2 vec = Vector2(((m_maptiles[i][j].getPrevious()->getCenter() - m_maptiles[i][j].getCenter()) / 3) + m_maptiles[i][j].getCenter());
+				m_maptiles[i][j].setEnd(vec);
+			}
+		}
+	}
+
+}
+
+void Game::enemyMovement()
+{
+	m_enemyMovementTimer++;
+
+	if (m_enemyMovementTimer > 20)
+	{
+		for (auto e : m_enemies)
+		{
+			MapTile* tile = m_maptiles[(int)e->getPos().x / 32][(int)e->getPos().y / 32].getPrevious();
+			Vector2 destPos;
+			if (tile != NULL)
+			{
+				destPos = tile->getPosition();
+			}
+			else
+			{
+				destPos = m_maptiles[(int)e->getPos().x / 32][(int)e->getPos().y / 32].getPosition();
+			}
+			e->update(destPos);
+
+		}
+		m_enemyMovementTimer = 0;
+	}
 }
