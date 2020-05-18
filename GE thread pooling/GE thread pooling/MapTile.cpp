@@ -1,13 +1,26 @@
 #include "MapTile.h"
 
+/// <summary>
+/// Constructor
+/// </summary>
 MapTile::MapTile()
 {
 }
 
+/// <summary>
+/// Deconstructor
+/// </summary>
 MapTile::~MapTile()
 {
 }
 
+/// <summary>
+/// Init tile variables
+/// </summary>
+/// <param name="renderer"></param>
+/// <param name="path"></param>
+/// <param name="pos"></param>
+/// <param name="isObstacle"></param>
 void MapTile::init(SDL_Renderer* renderer, const char* path, Vector2 pos, bool isObstacle)
 {
 	SDL_Surface* surface = SDL_LoadBMP(path);
@@ -18,10 +31,13 @@ void MapTile::init(SDL_Renderer* renderer, const char* path, Vector2 pos, bool i
 	m_dstRect->x = pos.x; m_dstRect->y = pos.y; m_dstRect->w = 32; m_dstRect->h = 32;
 	m_isObstacle = isObstacle;
 	m_center = Vector2(pos.x + 16, pos.y + 16);
-	m_cost = 0;
 	m_isObstacle = isObstacle;
 }
 
+/// <summary>
+/// Render the tile
+/// </summary>
+/// <param name="renderer"></param>
 void MapTile::render(SDL_Renderer*& renderer)
 {
 	SDL_RenderCopy(renderer, m_texture, NULL, m_dstRect);
@@ -33,96 +49,112 @@ void MapTile::render(SDL_Renderer*& renderer)
 
 }
 
+/// <summary>
+/// Add passed neighbouring tile to vector
+/// </summary>
+/// <param name="mapTile"></param>
 void MapTile::addAdjacent(MapTile& mapTile)
 {
 	m_adjacents.push_back(&mapTile);
 }
 
+/// <summary>
+/// Store the destination tile 
+/// </summary>
+/// <param name="mapTile"></param>
 void MapTile::setPrevious(MapTile& mapTile)
 {
 	m_previous = &mapTile;
 }
 
-void MapTile::setCost(int cost)
-{
-	m_cost = cost;
-}
-
-void MapTile::setStart(bool start)
-{
-	m_start = start;
-}
-
-void MapTile::setGoal(bool goal)
-{
-	m_goal = goal;
-}
-
-void MapTile::setPath(bool path)
-{
-	m_path = path;
-}
-
+/// <summary>
+/// Sets the tile to visited when the algorithm checks the tile
+/// </summary>
+/// <param name="visited"></param>
 void MapTile::setVisited(bool visited)
 {
 	m_visited = visited;
 }
 
+/// <summary>
+/// Sets is obstacle to the passed bool
+/// used to set the current tile the enemy is on to a wall so enemies path around it
+/// </summary>
+/// <param name="isObstacle"></param>
+void MapTile::setIsObstacle(bool isObstacle)
+{
+	m_isObstacle = isObstacle;
+}
+
+/// <summary>
+/// sets the end point of the vector
+/// </summary>
+/// <param name="end"></param>
 void MapTile::setEnd(Vector2 end)
 {
 	m_end = end;
 }
 
+/// <summary>
+/// Returns isObstacle
+/// Used to check if tile is a wall to exclude it from the algorithm
+/// </summary>
+/// <returns></returns>
 bool MapTile::getIsObstacle()
 {
 	return m_isObstacle;
 }
 
-bool MapTile::getStart()
-{
-	return m_start;
-}
-
-bool MapTile::getGoal()
-{
-	return m_goal;
-}
-
-bool MapTile::getPath()
-{
-	return m_path;
-}
-
+/// <summary>
+/// Returns m_visited
+/// Used to check if the algorithm has checked the tile
+/// </summary>
+/// <returns></returns>
 bool MapTile::getVisited()
 {
 	return m_visited;
 }
 
+/// <summary>
+/// Returns the end point of the vector
+/// </summary>
+/// <returns></returns>
 Vector2 MapTile::getEnd()
 {
 	return m_end;
 }
 
+/// <summary>
+/// Returns the tiles center
+/// </summary>
+/// <returns></returns>
 Vector2 MapTile::getCenter()
 {
 	return m_center;
 }
 
+/// <summary>
+/// Returns the tiles position
+/// </summary>
+/// <returns></returns>
 Vector2 MapTile::getPosition()
 {
 	return m_pos;
 }
 
-int MapTile::getCost()
-{
-	return m_cost;
-}
-
+/// <summary>
+/// Returns the list of the tiles neighbour tiles
+/// </summary>
+/// <returns></returns>
 std::list<MapTile*>& MapTile::getAdjacents()
 {
 	return m_adjacents;
 }
 
+/// <summary>
+/// Returns the destination tile
+/// </summary>
+/// <returns></returns>
 MapTile* MapTile::getPrevious()
 {
 	return m_previous;

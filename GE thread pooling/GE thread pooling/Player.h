@@ -11,7 +11,6 @@ public:
 	Player(SDL_Renderer* renderer);
 	~Player();
 
-	void pollEvent(SDL_Event e, MapTile* maptile);
 	void setPos(Vector2 pos);
 	void moveLeft();
 	void moveRight();
@@ -19,10 +18,12 @@ public:
 	void moveDown();
 	void update();
 	void render(SDL_Renderer* renderer);
+	void reset();
 	Vector2 getPos();
 private:
 
 	Vector2 m_pos;
+	Vector2 m_startingPos;
 	SDL_Texture* m_texture;
 	SDL_Rect* m_dstRect = new SDL_Rect;
 };

@@ -1,13 +1,23 @@
 #include "Game.h"
 
+/// <summary>
+/// Constructor
+/// </summary>
 Game::Game()
 {
 }
 
+/// <summary>
+/// Deconstructor
+/// </summary>
 Game::~Game()
 {
 }
 
+/// <summary>
+/// Initialise the game
+/// Read in the map and set each maptile's adjacents 
+/// </summary>
 void Game::init()
 {
 	m_running = true;
@@ -19,6 +29,7 @@ void Game::init()
 	m_player = new Player(m_renderer);
 	m_enemyMovementTimer = 20;
 	m_keyInputTimer = 5;
+
 	std::string line;
 	std::ifstream myFile("Assets/Maps/Map1.txt");
 	std::vector<int> mapArray;
@@ -39,7 +50,6 @@ void Game::init()
 			if (mapArray[arrayIndex] == 2)
 			{
 				m_maptiles[i][j].init(m_renderer, "Assets/Textures/wall.bmp", Vector2(i * 32, j * 32), true);
-				m_maptiles[i][j].setCost(999);
 				m_tiles.push_back(&m_maptiles[i][j]);
 				
 			}
@@ -67,9 +77,12 @@ void Game::init()
 		}
 	}
 	setAdjacents();
-
+	threadPool = new ThreadPool();
 }
 
+/// <summary>
+/// Event manager
+/// </summary>
 void Game::handleEvents()
 {
 	SDL_PollEvent(&m_event);
@@ -111,8 +124,6 @@ void Game::handleEvents()
 			default:
 				break;
 			}
-
-
 			break;
 		default:
 			break;
@@ -122,6 +133,9 @@ void Game::handleEvents()
 	m_keyInputTimer++;
 }
 
+/// <summary>
+/// Update game elements
+/// </summary>
 void Game::update()
 {
 	m_player->update();
@@ -132,6 +146,9 @@ void Game::update()
 
 }
 
+/// <summary>
+/// Render game elements
+/// </summary>
 void Game::render()
 {
 	SDL_RenderClear(m_renderer);
@@ -150,6 +167,9 @@ void Game::render()
 	SDL_RenderPresent(m_renderer);
 }
 
+/// <summary>
+/// Destroy the window and renderer and clean subsystems
+/// </summary>
 void Game::clean()
 {
 	SDL_DestroyWindow(m_window);
@@ -157,6 +177,9 @@ void Game::clean()
 	SDL_Quit();
 }
 
+/// <summary>
+/// For each tile in the map, add its neighbours to a vector of mapTiles 
+/// </summary>
 void Game::setAdjacents()
 {
 	for (int i = 0; i < 30; i++)
@@ -186,6 +209,9 @@ void Game::setAdjacents()
 	}
 }
 
+/// <summary>
+/// Creates a flow field using the players position as a goal.
+/// </summary>
 void Game::setFlowField()
 {
 	MapTile* goal = &m_maptiles[(int)m_player->getPos().x / 32][(int)m_player->getPos().y / 32];
@@ -196,22 +222,15 @@ void Game::setFlowField()
 	{
 		for (int j = 0; j < 30; j++)
 		{
-			m_maptiles[i][j].setStart(false);
-			m_maptiles[i][j].setGoal(false);
-			m_maptiles[i][j].setPath(false);
 			m_maptiles[i][j].setVisited(false);
-			m_maptiles[i][j].setCost(0);
 		}
 	}
 
-	goal->setGoal(true);
 	goal->setVisited(true);
 	queue.push_back(goal);
 
 	while (!queue.empty())
 	{
-		int originCost = queue.front()->getCost();
-
 		for (auto& a : queue.front()->getAdjacents())
 		{
 			if (!a->getVisited())
@@ -219,7 +238,6 @@ void Game::setFlowField()
 				a->setVisited(true);
 				if (!a->getIsObstacle())
 				{
-					a->setCost(originCost + 1);
 					a->setPrevious(*queue.front());
 					queue.push_back(a);
 				}
@@ -242,11 +260,15 @@ void Game::setFlowField()
 
 }
 
+/// <summary>
+/// Sets the enemy's position to the current tile's destination tile.
+/// Has a cooldown of 10 frames to slow the movement down
+/// </summary>
 void Game::enemyMovement()
 {
 	m_enemyMovementTimer++;
 
-	if (m_enemyMovementTimer > 20)
+	if (m_enemyMovementTimer > 10)
 	{
 		for (auto e : m_enemies)
 		{
@@ -260,9 +282,22 @@ void Game::enemyMovement()
 			{
 				destPos = m_maptiles[(int)e->getPos().x / 32][(int)e->getPos().y / 32].getPosition();
 			}
-			e->update(destPos);
+			e->setDestinationPos(destPos);
+			
+			threadPool->addTask(std::bind(&Enemy::update, e));
+
+			if (e->getPos() == m_player->getPos())
+			{
+				for (auto e : m_enemies)
+				{
+					threadPool->addTask(std::bind(&Enemy::reset, e));
+					
+				}
+				m_player->reset();
+			}
 
 		}
 		m_enemyMovementTimer = 0;
 	}
 }
+

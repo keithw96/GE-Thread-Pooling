@@ -1,5 +1,11 @@
 #include "Game.h"
 
+/// <summary>
+/// Main entry point
+/// </summary>
+/// <param name="argc"></param>
+/// <param name="argv"></param>
+/// <returns></returns>
 int main(int argc, char* argv[])
 {
 	const int FPS = 60;
